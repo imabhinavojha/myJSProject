@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "compounds": [
+        {
+            "name": "Run Server and Client",
+            "configurations": ["Run Server", "Run Client"]
+        }
+    ],
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Run Server",
+            "runtimeExecutable": "/Users/abhinavojha/.nvm/versions/node/v16.20.2/bin/npm",
+            "runtimeArgs": ["run", "dev"],
+            "cwd": "${workspaceFolder}/server",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Run Client",
+            "runtimeExecutable": "/Users/abhinavojha/.nvm/versions/node/v16.20.2/bin/npm",
+            "runtimeArgs": ["start"],
+            "cwd": "${workspaceFolder}/client",
+            "console": "integratedTerminal"
+        }
+    ]
+}
