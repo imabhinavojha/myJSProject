@@ -2,17 +2,26 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const shortid = require('shortid');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+const PORT = process.env.PORT || 5001;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/urlshortener';
+
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/urlshortener', {
+mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
 });
 
+// URL Schema
 const urlSchema = new mongoose.Schema({
     originalUrl: { type: String, required: true },
     shortUrl: { type: String, required: true, unique: true },
@@ -22,26 +31,47 @@ const Url = mongoose.model('Url', urlSchema);
 
 // Create a short URL
 app.post('/shorten', async (req, res) => {
-    const { originalUrl } = req.body;
+    try {
+        const { originalUrl } = req.body;
 
-    if (!originalUrl) return res.status(400).json({ error: 'Original URL required' });
+        if (!originalUrl) {
+            console.error('Original URL not provided');
+            return res.status(400).json({ error: 'Original URL required' });
+        }
 
-    const shortUrl = shortid.generate();
-    const newUrl = new Url({ originalUrl, shortUrl });
-    await newUrl.save();
-    res.json({ originalUrl, shortUrl });
+        const shortUrl = shortid.generate();
+        const newUrl = new Url({ originalUrl, shortUrl });
+
+        await newUrl.save();
+        console.log(`Shortened URL created: ${shortUrl}`);
+        res.json({ originalUrl, shortUrl });
+    } catch (error) {
+        console.error('Error in /shorten endpoint:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 // Redirect to original URL
 app.get('/:shortUrl', async (req, res) => {
-    const { shortUrl } = req.params;
-    const urlData = await Url.findOne({ shortUrl });
+    try {
+        const { shortUrl } = req.params;
 
-    if (!urlData) return res.status(404).json({ error: 'URL not found' });
+        const urlData = await Url.findOne({ shortUrl });
 
-    res.redirect(urlData.originalUrl);
+        if (!urlData) {
+            console.error(`No URL found for short URL: ${shortUrl}`);
+            return res.status(404).json({ error: 'URL not found' });
+        }
+
+        console.log(`Redirecting to original URL: ${urlData.originalUrl}`);
+        res.redirect(urlData.originalUrl);
+    } catch (error) {
+        console.error('Error in redirect endpoint:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
-app.listen(5001, () => {
-    console.log('Server running on http://localhost:5001');
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });

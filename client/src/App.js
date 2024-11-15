@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+
 function App() {
     const [originalUrl, setOriginalUrl] = useState('');
     const [shortUrl, setShortUrl] = useState('');
+    const [error, setError] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5001/shorten', { originalUrl });
-            setShortUrl(`http://localhost:5001/${response.data.shortUrl}`);
-        } catch (error) {
-            console.error('Error shortening the URL:', error);
+            console.log('Submitting URL:', originalUrl);
+            console.log('API_URL :', API_URL);
+
+            const response = await axios.post(`${API_URL}/shorten`, { originalUrl });
+            console.log('Response from server:', response.data);
+
+            setShortUrl(`${API_URL}/${response.data.shortUrl}`);
+            setError(null);
+        } catch (err) {
+            console.error('Error shortening the URL:', err);
+            setError('Failed to shorten the URL. Please try again.');
         }
     };
 
@@ -30,6 +40,11 @@ function App() {
                     Shorten
                 </button>
             </form>
+            {error && (
+                <p style={{ color: 'red', marginTop: '20px' }}>
+                    {error}
+                </p>
+            )}
             {shortUrl && (
                 <div style={{ marginTop: '20px' }}>
                     <p>Short URL:</p>
